@@ -14,7 +14,7 @@ jobs:
         id: deployment
         with:
           token: ${{ github.token }}
-          environment: ${{ test }}
+          environment: 'test'
 
       - uses: chrnorm/deployment-status@v2
         with:
