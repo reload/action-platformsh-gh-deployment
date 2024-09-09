@@ -1,0 +1,23 @@
+---
+name: "Creating a mock deployment"
+
+on: workflow_dispatch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: chrnorm/deployment-action@v2
+        name: Create GitHub deployment
+        id: deployment
+        with:
+          token: ${{ github.token }}
+          environment: ${{ test }}
+
+      - uses: chrnorm/deployment-status@v2
+        with:
+          state: 'success'
+          token: '${{ github.token }}'
+          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
