@@ -19,5 +19,5 @@ jobs:
       - uses: chrnorm/deployment-status@v2
         with:
           state: 'success'
-          token: '${{ github.token }}'
+          token: ${{ secrets.GH_DEPLOYMENT_TOKEN }}
           deployment-id: ${{ steps.deployment.outputs.deployment_id }}
