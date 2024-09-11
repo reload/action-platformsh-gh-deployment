@@ -1,0 +1,114 @@
+---
+name: 'GH Deployment from PlatformSH'
+description: 'Creating a GitHub deployment if PlatformSH has deployed'
+branding:
+  icon: 'box'
+  color: 'purple'
+
+inputs:
+  PLATFORMSH_KEY:
+    description: "API key for connecting to Platform.sh"
+    required: true
+    type: string
+
+  PLATFORMSH_ID:
+    description: "ID for the Platform.sh project."
+    required: true
+    type: string
+
+  GH_DEPLOYMENT_TOKEN:
+    description: "PAT GH token, for deployment. Cannot be github.token."
+    required: true
+    type: string
+
+  DEPLOY_STATUS_PATH:
+    description: 'The location of the deploy-status file on the website.'
+    default: '/sites/default/files/deploy-status'
+    required: false
+    type: string
+
+  PSH_DETECTION_WAIT:
+    description: "How long should we maximum wait for PSH to detect the push? If the branch doesnt exist in the PlatformSH GIT Remote, this is how long the action will take. Actually inactive environments get detected instantly. Default: 30 seconds."
+    default: 15
+    required: false
+    type: integer
+
+  BRANCH_NAME:
+    description: "Branch, which we will use to look"
+    required: true
+    type: string
+
+  USE_PULL_REQUESTS:
+    description: "If true, we will look up PSH environments based on PRs, rather than just the branch name. Default: 0"
+    default: 0
+    required: false
+    type: integer
+
+outputs:
+  url:
+    description: "The ready-to-connect URL"
+    value: ${{ steps.platform_sh.outputs.url }}
+  deployment_id:
+    description: "The GH Deployment ID"
+    value: ${{ steps.deployment.outputs.deployment_id }}
+  deployment_status_id:
+    description: "The GH Deployment status ID"
+    value: ${{ steps.deployment_status_success.outputs.deployment_status_id }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v3
+
+    - run: echo "ENVIRONMENT=${{ inputs.BRANCH_NAME }}" >> $GITHUB_ENV
+
+    - id: get_pr_environment
+      if: inputs.USE_PULL_REQUESTS == 1
+      run: |
+        PR_NUMBER="$(gh api "/repos/$OWNER/$REPO/pulls?head=$OWNER:$BRANCH" --jq '.[].number')"
+        echo "ENVIRONMENT=pr-$PR_NUMBER" >> $GITHUB_ENV
+      env:
+        GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
+        OWNER: ${{ github.repository_owner }}
+        REPO: ${{ github.event.repository.name }}
+        BRANCH: ${{ inputs.BRANCH_NAME }}
+
+    - id: deployment
+      name: Create GH Deployment
+      run: |
+        DEPLOYMENT_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments" -f "ref=${{ github.event.sha }}" -f "environment=$ENVIRONMENT" --jq '.id')"
+        echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+      env:
+        GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
+        OWNER: ${{ github.repository_owner }}
+        REPO: ${{ github.event.repository.name }}
+
+    - id: deployment_status_fail
+      if: github.event.state == 'error' || github.event.state == 'failure'
+      run: |
+        STATUS_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments/${{ steps.deployment.outputs.deployment_id }}/statuses" -f "state=failure" --jq '.id')"
+        echo "deployment_status_id=$STATUS_ID" >> $GITHUB_OUTPUT
+        run: exit 1
+      env:
+        GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
+        OWNER: ${{ github.repository_owner }}
+        REPO: ${{ github.event.repository.name }}
+
+    - uses: reload/action-platformsh-deploy-status@main
+      id: platform_sh
+      with:
+        PLATFORMSH_ID: ${{ inputs.PLATFORMSH_ID }}
+        PLATFORMSH_KEY: ${{ inputs.PLATFORMSH_KEY }}
+        PSH_DETECTION_WAIT: ${{ inputs.PSH_DETECTION_WAIT }}
+        DEPLOY_STATUS_PATH: ${{ inputs.DEPLOY_STATUS_PATH }}
+        ENVIRONMENT_NAME: ${{ env.ENVIRONMENT }}
+        ALLOW_CANCEL_CRON: 0
+
+    - id: deployment_status_success
+      run: |
+        STATUS_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments/${{ steps.deployment.outputs.deployment_id }}/statuses" -f "state=${{ steps.platform_sh.outputs.state }}" -f "description=${{ steps.platform_sh.outputs.state_description }}" -f "target_url=${{ steps.platform_sh.outputs.url }}" --jq '.id')"
+        echo "deployment_status_id=$STATUS_ID" >> $GITHUB_OUTPUT
+      env:
+        GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
+        OWNER: ${{ github.repository_owner }}
+        REPO: ${{ github.event.repository.name }}
