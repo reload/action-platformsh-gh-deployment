@@ -21,10 +21,16 @@ inputs:
     required: true
     type: string
 
-  DEPLOY_STATUS_PATH:
+  PSH_DEPLOY_STATUS_PATH:
     description: 'The location of the deploy-status file on the website.'
     default: '/sites/default/files/deploy-status'
     required: false
+    type: string
+
+  PSH_ACTIVITY_TYPES:
+    description: "Comma-seperated types of deployments to wait for. Default: push - See types here: https://docs.platform.sh/integrations/activity/reference.html#environment-activity-types"
+    default: "push"
+    required: true
     type: string
 
   PSH_DETECTION_WAIT:
@@ -100,7 +106,8 @@ runs:
         PLATFORMSH_ID: ${{ inputs.PLATFORMSH_ID }}
         PLATFORMSH_KEY: ${{ inputs.PLATFORMSH_KEY }}
         PSH_DETECTION_WAIT: ${{ inputs.PSH_DETECTION_WAIT }}
-        DEPLOY_STATUS_PATH: ${{ inputs.DEPLOY_STATUS_PATH }}
+        DEPLOY_STATUS_PATH: ${{ inputs.PSH_DEPLOY_STATUS_PATH }}
+        ACTIVITY_TYPES: ${{ inputs.PSH_ACTIVITY_TYPES }}
         ENVIRONMENT_NAME: ${{ env.ENVIRONMENT }}
         ALLOW_CANCEL_CRON: 0
 
