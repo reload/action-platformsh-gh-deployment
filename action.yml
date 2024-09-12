@@ -16,6 +16,11 @@ inputs:
     required: true
     type: string
 
+  GH_DEPLOYMENT_TOKEN:
+    description: "PAT GH token, for deployment. Cannot be github.token."
+    required: true
+    type: string
+
   DEPLOY_STATUS_PATH:
     description: 'The location of the deploy-status file on the website.'
     default: '/sites/default/files/deploy-status'
@@ -63,7 +68,7 @@ runs:
         PR_NUMBER="$(gh api "/repos/$OWNER/$REPO/pulls?head=$OWNER:$BRANCH" --jq '.[].number')"
         echo "ENVIRONMENT=pr-$PR_NUMBER" >> $GITHUB_ENV
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
         OWNER: ${{ github.repository_owner }}
         REPO: ${{ github.event.repository.name }}
         BRANCH: ${{ inputs.BRANCH_NAME }}
@@ -74,7 +79,7 @@ runs:
         DEPLOYMENT_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments" -f "ref=${{ github.event.sha }}" -f "environment=$ENVIRONMENT" --jq '.id')"
         echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
       env:
-        GH_TOKEN: ${{ secrets.GH_DEPLOYMENT_TOKEN }}
+        GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
         OWNER: ${{ github.repository_owner }}
         REPO: ${{ github.event.repository.name }}
 
@@ -85,15 +90,15 @@ runs:
         echo "deployment_status_id=$STATUS_ID" >> $GITHUB_OUTPUT
         run: exit 1
       env:
-        GH_TOKEN: ${{ secrets.GH_DEPLOYMENT_TOKEN }}
+        GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
         OWNER: ${{ github.repository_owner }}
         REPO: ${{ github.event.repository.name }}
 
     - uses: reload/action-platformsh-deploy-status@main
       id: platform_sh
       with:
-        PLATFORMSH_ID: ${{ secrets.PLATFORMSH_ID }}
-        PLATFORMSH_KEY: ${{ secrets.PLATFORMSH_KEY }}
+        PLATFORMSH_ID: ${{ inputs.PLATFORMSH_ID }}
+        PLATFORMSH_KEY: ${{ inputs.PLATFORMSH_KEY }}
         PSH_DETECTION_WAIT: ${{ inputs.PSH_DETECTION_WAIT }}
         DEPLOY_STATUS_PATH: ${{ inputs.DEPLOY_STATUS_PATH }}
         ENVIRONMENT_NAME: ${{ env.ENVIRONMENT }}
@@ -104,6 +109,6 @@ runs:
         STATUS_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments/${{ steps.deployment.outputs.deployment_id }}/statuses" -f "state=${{ steps.platform_sh.outputs.state }}" -f "description=${{ steps.platform_sh.outputs.state_description }}" -f "target_url=${{ steps.platform_sh.outputs.url }}" --jq '.id')"
         echo "deployment_status_id=$STATUS_ID" >> $GITHUB_OUTPUT
       env:
-        GH_TOKEN: ${{ secrets.GH_DEPLOYMENT_TOKEN }}
+        GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
         OWNER: ${{ github.repository_owner }}
         REPO: ${{ github.event.repository.name }}
