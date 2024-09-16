@@ -66,9 +66,11 @@ runs:
   steps:
     - uses: actions/checkout@v3
 
-    - run: echo "ENVIRONMENT=${{ inputs.BRANCH_NAME }}" >> $GITHUB_ENV
+    - shell: bash
+      run: echo "ENVIRONMENT=${{ inputs.BRANCH_NAME }}" >> $GITHUB_ENV
 
     - id: get_pr_environment
+      shell: bash
       if: inputs.USE_PULL_REQUESTS == 1
       run: |
         PR_NUMBER="$(gh api "/repos/$OWNER/$REPO/pulls?head=$OWNER:$BRANCH" --jq '.[].number')"
@@ -80,6 +82,7 @@ runs:
         BRANCH: ${{ inputs.BRANCH_NAME }}
 
     - id: deployment
+      shell: bash
       name: Create GH Deployment
       run: |
         DEPLOYMENT_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments" -f "ref=${{ github.event.sha }}" -f "environment=$ENVIRONMENT" --jq '.id')"
@@ -90,6 +93,7 @@ runs:
         REPO: ${{ github.event.repository.name }}
 
     - id: deployment_status_fail
+      shell: bash
       if: github.event.state == 'error' || github.event.state == 'failure'
       run: |
         STATUS_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments/${{ steps.deployment.outputs.deployment_id }}/statuses" -f "state=failure" --jq '.id')"
@@ -112,6 +116,7 @@ runs:
         ALLOW_CANCEL_CRON: 0
 
     - id: deployment_status_success
+      shell: bash
       run: |
         STATUS_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments/${{ steps.deployment.outputs.deployment_id }}/statuses" -f "state=${{ steps.platform_sh.outputs.state }}" -f "description=${{ steps.platform_sh.outputs.state_description }}" -f "target_url=${{ steps.platform_sh.outputs.url }}" --jq '.id')"
         echo "deployment_status_id=$STATUS_ID" >> $GITHUB_OUTPUT
