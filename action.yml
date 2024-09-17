@@ -106,7 +106,7 @@ runs:
       run: |
         STATUS_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments/${{ steps.deployment.outputs.deployment_id }}/statuses" -f "state=failure" --jq '.id')"
         echo "deployment_status_id=$STATUS_ID" >> $GITHUB_OUTPUT
-        run: exit 1
+        exit 1
       env:
         GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
         OWNER: ${{ github.repository_owner }}
