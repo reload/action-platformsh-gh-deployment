@@ -85,7 +85,15 @@ runs:
       shell: bash
       name: Create GH Deployment
       run: |
-        DEPLOYMENT_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments" -f "ref=${{ inputs.BRANCH_NAME }}" -f "environment=$ENVIRONMENT" -F "auto_merge=false" -F "required_contexts=null" --jq '.id')"
+        DEPLOYMENT_ID=$(echo '{
+          "ref": "${{ inputs.BRANCH_NAME }}",
+          "environment": "$ENVIRONMENT",
+          "auto_merge": false,
+          "required_contexts": []
+        }' | gh api --method POST "/repos/$OWNER/$REPO/deployments" \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          --input - --jq '.id')
         echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
       env:
         GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
