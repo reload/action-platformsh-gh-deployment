@@ -124,6 +124,7 @@ runs:
         ALLOW_CANCEL_CRON: 0
 
     - id: deployment_status_success
+      if: always()
       shell: bash
       run: |
         STATUS_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments/${{ steps.deployment.outputs.deployment_id }}/statuses" -f "state=${{ steps.platform_sh.outputs.state }}" -f "description=${{ steps.platform_sh.outputs.state_description }}" -f "target_url=${{ steps.platform_sh.outputs.url }}" --jq '.id')"
