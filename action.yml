@@ -85,7 +85,7 @@ runs:
       shell: bash
       name: Create GH Deployment
       run: |
-        DEPLOYMENT_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments" -f "ref=${{ github.event.sha }}" -f "environment=$ENVIRONMENT" -F "auto_merge=false" --jq '.id')"
+        DEPLOYMENT_ID="$(gh api --method POST "/repos/$OWNER/$REPO/deployments" -f "ref=${{ inputs.BRANCH_NAME }}" -f "environment=$ENVIRONMENT" -F "auto_merge=false" --jq '.id')"
         echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
       env:
         GH_TOKEN: ${{ inputs.GH_DEPLOYMENT_TOKEN }}
