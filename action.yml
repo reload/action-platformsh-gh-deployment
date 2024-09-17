@@ -87,7 +87,7 @@ runs:
       run: |
         DEPLOYMENT_ID=$(echo '{
           "ref": "${{ inputs.BRANCH_NAME }}",
-          "environment": "$ENVIRONMENT",
+          "environment": "${{ env.ENVIRONMENT }}",
           "auto_merge": false,
           "required_contexts": []
         }' | gh api --method POST "/repos/$OWNER/$REPO/deployments" \
