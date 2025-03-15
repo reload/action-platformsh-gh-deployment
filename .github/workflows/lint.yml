@@ -15,14 +15,14 @@ permissions:
 jobs:
   actionlint:
     name: GitHub Actions
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: reviewdog/action-actionlint@v1
 
   markdownlint:
     name: Markdown
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Run markdownlint
@@ -30,7 +30,7 @@ jobs:
 
   yamllint:
     name: YAML
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Run Yamllint
