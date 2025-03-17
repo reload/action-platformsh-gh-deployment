@@ -17,7 +17,7 @@ inputs:
     type: string
 
   GH_DEPLOYMENT_TOKEN:
-    description: "PAT GH token, for deployment. Cannot be github.token."
+    description: "GitHub token, for deployment. E.g. github.token."
     required: true
     type: string
 
