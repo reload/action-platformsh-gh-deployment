@@ -15,9 +15,6 @@ on:
   status:
 
 permissions:
-  pull-requests: read
-  deployments: write
-  statuses: write
   contents: read
 
 jobs:
@@ -32,7 +29,7 @@ jobs:
         with:
           PLATFORMSH_ID: ${{ vars.PSH_PROJECT_ID }}
           PLATFORMSH_KEY: ${{ secrets.DAIS_PLATFORMSH_KEY }}
-          GH_DEPLOYMENT_TOKEN: ${{ github.token }}
+          GH_DEPLOYMENT_TOKEN: ${{ secrets.PAT_TOKEN }}
           PSH_ACTIVITY_TYPES: "push,domain.create,domain.update"
           BRANCH_NAME: ${{ github.event_name == 'status' && github.event.branches[0].name || github.ref_name }}
           USE_PULL_REQUESTS: ${{ github.event_name == 'status' && 1 || 0 }}
@@ -42,8 +39,9 @@ jobs:
 
 - `PLATFORMSH_KEY`: API key for connecting to Platform.sh.
 - `PLATFORMSH_ID`: ID for the Platform.sh project.
-- `GH_DEPLOYMENT_TOKEN`: GitHub token, for
-  deployment. E.g. github.token.
+- `GH_DEPLOYMENT_TOKEN`: GitHub token, for deployment. Use personal
+  access token (PAT). The `github.token` will not be able to trigger
+  other workflows.
 - `PSH_DEPLOY_STATUS_PATH`: The location of the deploy-status file on
   the website.
 - `PSH_ACTIVITY_TYPES`: Comma-seperated types of deployments to wait
