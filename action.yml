@@ -64,7 +64,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - shell: bash
       run: echo "ENVIRONMENT=${{ inputs.BRANCH_NAME }}" >> $GITHUB_ENV
