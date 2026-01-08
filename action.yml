@@ -85,12 +85,24 @@ runs:
       shell: bash
       name: Create GH Deployment
       run: |
-        DEPLOYMENT_ID=$(echo '{
-          "ref": "${{ inputs.BRANCH_NAME }}",
-          "environment": "${{ env.ENVIRONMENT }}",
-          "auto_merge": false,
-          "required_contexts": []
-        }' | gh api --method POST "/repos/$OWNER/$REPO/deployments" \
+        if [ "${{ inputs.USE_PULL_REQUESTS }}" == "1" ]; then
+          TRANSIENT="true"
+        else
+          TRANSIENT="false"
+        fi
+        if [ "${{ inputs.BRANCH_NAME }}" == "main" ] || [ "${{ inputs.BRANCH_NAME }}" == "master" ]; then
+          PRODUCTION="true"
+        else
+          PRODUCTION="false"
+        fi
+        DEPLOYMENT_ID=$(echo "{
+          \"ref\": \"${{ inputs.BRANCH_NAME }}\",
+          \"environment\": \"${{ env.ENVIRONMENT }}\",
+          \"auto_merge\": false,
+          \"required_contexts\": [],
+          \"transient_environment\": $TRANSIENT,
+          \"production_environment\": $PRODUCTION
+        }" | gh api --method POST "/repos/$OWNER/$REPO/deployments" \
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           --input - --jq '.id')
